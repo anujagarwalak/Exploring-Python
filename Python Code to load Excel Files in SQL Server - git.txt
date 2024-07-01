@@ -1,0 +1,45 @@
+
+import pandas as pd
+from sqlalchemy import create_engine
+
+# Load the Excel file
+excel_file_path = r"enter file path here"
+excel_data = pd.ExcelFile(excel_file_path)
+
+# Get all sheet names as a list
+sheet_names = excel_data.sheet_names
+
+# Print the list of sheet names
+print("Sheet Names:", sheet_names)
+
+# read the specific sheet and load it in df
+df1 = pd.read_excel(excel_data, 'Sheet1')  # Replace 'Sheet1' with your sheet name
+# Alternatively, use sheet index (e.g., df1 = pd.read_excel(xls, 0))
+print(df1.head())
+
+# get full output 
+pd.set_option("display.max_rows", None)
+pd.set_option("display.max_columns", None)
+
+# get dataframe column type & max size 
+for col in df1.columns:
+    if df1[col].dtype == "object":
+        max_length = df1[col].apply(lambda x: len(str(x))).max()
+        data_type = df1[col].dtype
+        print(f"Column: {col}, Max Length: {max_length}, Data Type: {data_type}")
+    else:
+        data_type = df1[col].dtype
+        print(f"Column: {col}, Data Type: {data_type}")
+        continue  # Skip non-object columns
+
+# SQL Server connection details
+server = '10.***.***.***'
+database = '*****'
+table_name = 'enter table name here'  # Specify your desired table name
+
+# Create a SQLAlchemy engine
+engine = create_engine(f"mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server")
+
+# Write DataFrame to SQL Server table, this will create a new table if not present already
+df1.to_sql(table_name, engine, index=False, if_exists='replace')
+
